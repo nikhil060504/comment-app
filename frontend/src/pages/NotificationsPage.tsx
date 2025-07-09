@@ -8,7 +8,7 @@ interface Notification {
   createdAt: string;
 }
 
-const API_URL = 'http://localhost:3000'; // Change if backend runs elsewhere
+const API_URL = 'https://comment-app-3pqk.onrender.com'; // Change if backend runs elsewhere
 
 const NotificationsPage: React.FC<{ token: string }> = ({ token }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);

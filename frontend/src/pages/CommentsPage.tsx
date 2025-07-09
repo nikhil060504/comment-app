@@ -10,7 +10,7 @@ interface Comment {
   children: Comment[];
 }
 
-const API_URL = 'http://localhost:3000'; // Change if backend runs elsewhere
+const API_URL = 'https://comment-app-3pqk.onrender.com'; // Change if backend runs elsewhere
 
 function CommentNode({ comment, token, onReply, onEdit, onDelete, onRestore }: {
   comment: Comment;
