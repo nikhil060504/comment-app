@@ -41,22 +41,26 @@ let CommentsService = class CommentsService {
         return this.commentsRepository.save(comment);
     }
     async findThread(rootId) {
-        const root = await this.commentsRepository.findOne({ where: { id: rootId } });
+        const root = await this.commentsRepository.findOne({ where: { id: rootId }, relations: { user: true, children: true } });
         if (!root)
             throw new common_1.NotFoundException('Comment not found');
-        const descendants = await this.commentsRepository.find({
-            where: { parent: root },
-            relations: { user: true, children: true },
-        });
-        return { root, descendants };
+        const fetchChildren = async (comment) => {
+            const children = await this.commentsRepository.find({ where: { parent: { id: comment.id } }, relations: { user: true, children: true } });
+            comment.children = [];
+            for (const child of children) {
+                comment.children.push(await fetchChildren(child));
+            }
+            return comment;
+        };
+        const fullTree = await fetchChildren(root);
+        return fullTree;
     }
     async update(id, dto, user) {
         const comment = await this.commentsRepository.findOne({ where: { id }, relations: { user: true } });
         if (!comment)
             throw new common_1.NotFoundException('Comment not found');
-        const diff = (Date.now() - comment.createdAt.getTime()) / 1000;
-        if (comment.user.id !== user.id || diff > 900) {
-            throw new common_1.ForbiddenException('Edit window expired or not owner');
+        if (comment.user.id !== user.id) {
+            throw new common_1.ForbiddenException('Not owner');
         }
         comment.content = dto.content;
         return this.commentsRepository.save(comment);
@@ -65,9 +69,8 @@ let CommentsService = class CommentsService {
         const comment = await this.commentsRepository.findOne({ where: { id }, relations: { user: true } });
         if (!comment)
             throw new common_1.NotFoundException('Comment not found');
-        const diff = (Date.now() - comment.createdAt.getTime()) / 1000;
-        if (comment.user.id !== user.id || diff > 900) {
-            throw new common_1.ForbiddenException('Delete window expired or not owner');
+        if (comment.user.id !== user.id) {
+            throw new common_1.ForbiddenException('Not owner');
         }
         comment.deletedAt = new Date();
         return this.commentsRepository.save(comment);
@@ -76,9 +79,8 @@ let CommentsService = class CommentsService {
         const comment = await this.commentsRepository.findOne({ where: { id }, relations: { user: true } });
         if (!comment || !comment.deletedAt)
             throw new common_1.NotFoundException('Cannot restore');
-        const diff = (Date.now() - comment.deletedAt.getTime()) / 1000;
-        if (comment.user.id !== user.id || diff > 900) {
-            throw new common_1.ForbiddenException('Restore window expired or not owner');
+        if (comment.user.id !== user.id) {
+            throw new common_1.ForbiddenException('Not owner');
         }
         comment.deletedAt = null;
         return this.commentsRepository.save(comment);

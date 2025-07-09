@@ -9,10 +9,7 @@ export declare class CommentsService {
     private notificationsService;
     constructor(commentsRepository: Repository<Comment>, notificationsService: NotificationsService);
     create(dto: CreateCommentDto, user: User): Promise<Comment>;
-    findThread(rootId: number): Promise<{
-        root: Comment;
-        descendants: Comment[];
-    }>;
+    findThread(rootId: number): Promise<Comment>;
     update(id: number, dto: UpdateCommentDto, user: User): Promise<Comment>;
     softDelete(id: number, user: User): Promise<Comment>;
     restore(id: number, user: User): Promise<Comment>;
